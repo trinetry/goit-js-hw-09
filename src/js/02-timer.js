@@ -1,53 +1,55 @@
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
-import 'notiflix/dist/notiflix-notify-aio-3.1.0.min.js';
 
 const refs = {
-    boxEl: document.createElement("div"),
-    pEl: document.querySelector("p"),
-    inputDateTimePicker: document.querySelector("#datetime-picker"),
-    btnStart: document.querySelector('button[data-start]'),
-    divTimer: document.querySelector(".timer"),
-    selectedDate: 0,
-    dateNowGlobal: 0,
-};
+    startBtn: document.querySelector('[data-start]'),
+    dayValue: document.querySelector('[data-days]'),
+    hourValue: document.querySelector('[data-hours]'),
+    minuteValue: document.querySelector('[data-minutes]'),
+    secondValue: document.querySelector('[data-seconds]'),
+}
 
-refs.boxEl.className = "boxElement";
-refs.pEl.after(refs.boxEl);
-refs.boxEl.prepend(refs.inputDateTimePicker, refs.btnStart, refs.divTimer);
-refs.btnStart.setAttribute("disabled", "");
+let selectedDate = null;
+let intervalId = null;
 
-const options = {
+refs.startBtn.setAttribute('disabled', true);
+
+flatpickr('#datetime-picker', {
   enableTime: true,
   time_24hr: true,
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
-    console.log(selectedDates[0]);
-  },
-};
+      console.log(selectedDates[0]);
+      selectedDate = selectedDates[0];
+      
+if(selectedDate.getTime() < new Date().getTime()){
+            Notify.failure('Please choose a date in the future');
+              refs.startBtn.setAttribute('disabled', true)
+            return;
+        }
+       refs.startBtn.removeAttribute('disabled');
+    },
+});
 
+refs.startBtn.addEventListener('click', onStartBtnClick)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<input type="text" id="datetime-picker" />
-
-
+function onStartBtnClick() {
+    
+    intervalId = setInterval(() => {
+        if (selectedDate <= Date.now()) {
+            clearInterval(intervalId);
+            return;
+        }
+    const { days, hours, minutes, seconds } = convertMs(selectedDate - new Date().getTime());
+    refs.dayValue.innerHTML = addLeadingZero(days);
+    refs.hourValue.innerHTML = addLeadingZero(hours);
+    refs.minuteValue.innerHTML = addLeadingZero(minutes);
+    refs.secondValue.innerHTML = addLeadingZero(seconds);
+    }, 1000)
+    refs.startBtn.setAttribute('disabled', true);
+}
 
 function convertMs(ms) {
   // Number of milliseconds per unit of time
@@ -71,3 +73,9 @@ function convertMs(ms) {
 console.log(convertMs(2000)); // {days: 0, hours: 0, minutes: 0, seconds: 2}
 console.log(convertMs(140000)); // {days: 0, hours: 0, minutes: 2, seconds: 20}
 console.log(convertMs(24140000)); // {days: 0, hours: 6 minutes: 42, seconds: 20}
+
+function addLeadingZero(value) {
+    if (value < 10) {
+return `${value}`.padStart(2, "0");
+    } else { return `${value}`};
+};
